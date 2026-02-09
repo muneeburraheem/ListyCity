@@ -1,73 +1,59 @@
 package com.example.listycity;
 
 import android.os.Bundle;
-import android.widget.ArrayAdapter;
-import android.widget.Button;
-import android.widget.EditText;
 import android.widget.ListView;
 
-import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.graphics.Insets;
-import androidx.core.view.ViewCompat;
-import androidx.core.view.WindowInsetsCompat;
+
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity
+        implements AddCityFragment.AddCityDialogListener {
 
-    ListView cityList;
-    ArrayAdapter<String> cityAdapter;
-    ArrayList<String> dataList;
-
-    EditText cityInput;
-    Button addBtn, deleteBtn;
-
-    int selectedIndex = -1;
+    private ArrayList<City> dataList;
+    private CityArrayAdapter cityAdapter;
+    private ListView cityList;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        EdgeToEdge.enable(this);
         setContentView(R.layout.activity_main);
 
-        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
-            Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
-            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
-            return insets;
-        });
+        String[] cities = {"Edmonton", "Vancouver", "Toronto"};
+        String[] provinces = {"AB", "BC", "ON"};
+
+        dataList = new ArrayList<>();
+        for (int i = 0; i < cities.length; i++) {
+            dataList.add(new City(cities[i], provinces[i]));
+        }
 
         cityList = findViewById(R.id.city_list);
-        cityInput = findViewById(R.id.city_input);
-        addBtn = findViewById(R.id.add_city);
-        deleteBtn = findViewById(R.id.delete_city);
-
-        String[] cities = {"Lahore", "Islamabad", "Skardu", "Hunza", "Quetta"};
-        dataList = new ArrayList<>(Arrays.asList(cities));
-
-        cityAdapter = new ArrayAdapter<>(this, R.layout.content, dataList);
+        cityAdapter = new CityArrayAdapter(this, dataList);
         cityList.setAdapter(cityAdapter);
 
+        // EDIT EXISTING CITY
         cityList.setOnItemClickListener((parent, view, position, id) -> {
-            selectedIndex = position;
+            City city = dataList.get(position);
+            AddCityFragment.newInstance(city)
+                    .show(getSupportFragmentManager(), "Edit City");
         });
 
-        addBtn.setOnClickListener(v -> {
-            String city = cityInput.getText().toString().trim();
-            if (!city.isEmpty()) {
-                dataList.add(city);
-                cityAdapter.notifyDataSetChanged();
-                cityInput.setText("");
-            }
-        });
+        FloatingActionButton fab = findViewById(R.id.button_add_city);
+        fab.setOnClickListener(v ->
+                new AddCityFragment()
+                        .show(getSupportFragmentManager(), "Add City"));
+    }
 
-        deleteBtn.setOnClickListener(v -> {
-            if (selectedIndex != -1) {
-                dataList.remove(selectedIndex);
-                cityAdapter.notifyDataSetChanged();
-                selectedIndex = -1;
-            }
-        });
+    @Override
+    public void addCity(City city) {
+        cityAdapter.add(city);
+        cityAdapter.notifyDataSetChanged();
+    }
+
+    @Override
+    public void updateCity() {
+        cityAdapter.notifyDataSetChanged();
     }
 }
